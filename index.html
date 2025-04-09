@@ -1,171 +1,246 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+<!DOCTYPE html><html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Caminho do Contrato Social</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f2efe6;
-      margin: 0;
-      padding: 20px;
-      text-align: center;
+    * {
+      box-sizing: border-box;
     }
-    h1 {
-      color: #2c3e50;
+    body {
+      font-family: 'Georgia', serif;
+      margin: 0;
+      background: url('fundo.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: #fff;
+      overflow-x: hidden;
+    }
+    #splash, #logo {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(0, 0, 0, 0.9);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+      animation: fadein 2s;
+    }
+    @keyframes fadein {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    #logo h1 {
+      font-size: 3em;
+      color: gold;
+      animation: float 3s infinite ease-in-out;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    #setup {
+      display: none;
+      flex-direction: column;
+      align-items: center;
     }
     #board {
       display: grid;
-      grid-template-columns: repeat(6, 60px);
-      gap: 10px;
+      grid-template-columns: repeat(7, 60px);
+      gap: 5px;
       justify-content: center;
-      margin-bottom: 20px;
+      margin: 20px auto;
+      position: relative;
     }
     .cell {
       width: 60px;
       height: 60px;
-      background: #e0d9c5;
-      border: 2px solid #8b7e66;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      border-radius: 8px;
+      text-align: center;
+      line-height: 60px;
       font-weight: bold;
+      background-color: rgba(255, 255, 255, 0.85);
+      color: #000;
+      position: relative;
     }
+    .start { background-color: #32CD32; }
+    .end { background-color: #8B0000; color: white; }
+    .special { border: 3px solid gold; }
     .player {
-      background-color: #2ecc71;
-      color: white;
-      border-radius: 50%;
+      position: absolute;
       width: 30px;
       height: 30px;
+      background-size: cover;
+      z-index: 5;
+      transition: all 1s ease;
+    }
+    #dice {
+      width: 80px;
+      height: 80px;
+      background: white;
+      border-radius: 16px;
+      border: 4px solid #333;
       display: flex;
-      align-items: center;
       justify-content: center;
-    }
-    #questionBox {
-      background: #fff;
-      padding: 20px;
-      border: 2px solid #ccc;
-      max-width: 500px;
-      margin: 0 auto 20px;
-      display: none;
-    }
-    button {
-      margin: 10px;
-      padding: 10px 20px;
-      background-color: #2980b9;
-      color: white;
-      border: none;
+      align-items: center;
+      margin: 20px auto 10px;
       cursor: pointer;
+      font-size: 2em;
+      color: black;
     }
-    button:hover {
-      background-color: #3498db;
+    #roll-text {
+      text-align: center;
+      font-size: 1.2em;
+      margin-bottom: 10px;
+    }
+    #message {
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 15px;
+      border-radius: 10px;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    #rousseau {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      width: 120px;
     }
   </style>
 </head>
 <body>
+<div id="logo">
   <h1>Caminho do Contrato Social</h1>
-  <div id="board"></div>
-  <div id="questionBox">
-    <p id="question"></p>
-    <div id="answers"></div>
+</div>
+<div id="splash" style="display:none;">
+  <h2>Bem-vindo!</h2>
+  <div id="setup">
+    <label for="players">Quantos jogadores?</label>
+    <input type="number" id="players" min="1" max="4">
+    <div id="names"></div>
+    <button onclick="startGame()">Começar</button>
   </div>
-  <button onclick="rollDice()">Rolar o Dado</button>
+  <button onclick="showSetup()">Iniciar</button>
+</div><div id="board"></div>
+<div id="dice" onclick="rollDice()">?</div>
+<div id="roll-text">Rolar dado</div>
+<div id="message">Rousseau: Vamos trilhar o caminho da liberdade!</div>
+<img id="rousseau" src="rousseau.png" alt="Rousseau"><script>
+  const questions = [...Array(50)].map((_, i) => `Pergunta ${i + 1}`);
+  const answers = [...Array(50)].map((_, i) => `Resposta ${i + 1}`);
+  let usedQuestions = Array(50).fill(false);
+  let players = [];
+  let currentPlayer = 0;
+  let positions = [];
+  let cells = [];
+  let rolling = false;
 
-  <script>
-    const boardSize = 30;
-    let position = 0;
+  setTimeout(() => {
+    document.getElementById('logo').style.display = 'none';
+    document.getElementById('splash').style.display = 'flex';
+  }, 3000);
 
-    const questions = [
-      {
-        q: "Qual é a ideia central de Rousseau sobre o homem em seu estado natural?",
-        options: [
-          "O homem é um ser racional acima de tudo.",
-          "O homem é naturalmente mau.",
-          "O homem é bom por natureza, mas corrompido pela sociedade.",
-          "O homem é igual em todas as formas de sociedade."
-        ],
-        answer: 2
-      },
-      {
-        q: "O que Rousseau queria dizer com 'Contrato Social'?",
-        options: [
-          "Um contrato assinado entre o rei e o povo.",
-          "Uma ideia de submissão à vontade alheia.",
-          "Um acordo em que os indivíduos abrem mão de parte de sua liberdade para viver em sociedade.",
-          "Um pacto econômico para distribuir riquezas."
-        ],
-        answer: 2
-      },
-      {
-        q: "Qual obra de Rousseau trata da educação?",
-        options: [
-          "O Príncipe",
-          "O Espírito das Leis",
-          "Emílio, ou Da Educação",
-          "Discurso sobre a Servidão Voluntária"
-        ],
-        answer: 2
-      }
-    ];
+  function showSetup() {
+    document.querySelector('#setup').style.display = 'flex';
+  }
 
+  function startGame() {
+    const num = parseInt(document.getElementById('players').value);
+    for (let i = 0; i < num; i++) {
+      const name = prompt(`Nome do jogador ${i + 1}`);
+      players.push(name);
+      positions.push(0);
+    }
+    document.getElementById('splash').style.display = 'none';
+    renderBoard();
+  }
+
+  function renderBoard() {
     const board = document.getElementById("board");
-    const questionBox = document.getElementById("questionBox");
-    const questionText = document.getElementById("question");
-    const answersDiv = document.getElementById("answers");
+    board.innerHTML = "";
+    cells = [];
+    for (let i = 0; i < 35; i++) {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      if (i === 0) cell.classList.add('start');
+      if (i === 34) cell.classList.add('end');
+      if (i % 5 === 0) cell.classList.add('special');
+      cell.textContent = i + 1;
+      board.appendChild(cell);
+      cells.push(cell);
+    }
+    updatePlayers();
+  }
 
-    function createBoard() {
-      board.innerHTML = "";
-      for (let i = 0; i < boardSize; i++) {
-        const cell = document.createElement("div");
-        cell.className = "cell";
-        if (i === position) {
-          const player = document.createElement("div");
-          player.className = "player";
-          player.innerText = "J";
-          cell.appendChild(player);
-        } else {
-          cell.innerText = i + 1;
-        }
-        board.appendChild(cell);
+  function updatePlayers() {
+    document.querySelectorAll('.player').forEach(p => p.remove());
+    players.forEach((_, i) => {
+      const p = document.createElement('div');
+      p.className = 'player';
+      p.style.backgroundImage = `url('player${i+1}.png')`;
+      const cell = cells[positions[i]];
+      if (cell) {
+        p.style.top = 0;
+        p.style.left = 0;
+        cell.appendChild(p);
       }
-    }
+    });
+  }
 
-    function rollDice() {
-      const randomQuestion = questions[Math.floor(Math.random() * questions.length)];
-      showQuestion(randomQuestion);
-    }
+  function rollDice() {
+    if (rolling) return;
+    rolling = true;
+    document.getElementById("roll-text").textContent = "Rolando...";
 
-    function showQuestion(q) {
-      questionBox.style.display = "block";
-      questionText.innerText = q.q;
-      answersDiv.innerHTML = "";
-      q.options.forEach((option, index) => {
-        const btn = document.createElement("button");
-        btn.innerText = option;
-        btn.onclick = () => checkAnswer(index, q.answer);
-        answersDiv.appendChild(btn);
-      });
-    }
+    let roll = Math.floor(Math.random() * 6) + 1;
+    let count = 0;
+    const dice = document.getElementById("dice");
+    const interval = setInterval(() => {
+      dice.textContent = Math.floor(Math.random() * 6) + 1;
+      count++;
+      if (count >= 15) {
+        clearInterval(interval);
+        dice.textContent = roll;
+        movePlayer(roll);
+        document.getElementById("roll-text").textContent = "Rolar dado";
+        rolling = false;
+      }
+    }, 200);
+  }
 
-    function checkAnswer(selected, correct) {
-      questionBox.style.display = "none";
-      if (selected === correct) {
-        const steps = Math.floor(Math.random() * 3) + 1;
-        position += steps;
-        if (position >= boardSize) {
-          alert("Parabéns! Você completou o Caminho do Contrato Social!");
-          position = boardSize - 1;
-        } else {
-          alert("Resposta correta! Avance " + steps + " casas.");
-        }
+  function movePlayer(roll) {
+    positions[currentPlayer] += roll;
+    if (positions[currentPlayer] >= 34) {
+      positions[currentPlayer] = 34;
+      updatePlayers();
+      document.getElementById("message").textContent = `Rousseau: ${players[currentPlayer]} venceu o jogo!`;
+    } else {
+      updatePlayers();
+      askQuestion(currentPlayer);
+    }
+    currentPlayer = (currentPlayer + 1) % players.length;
+  }
+
+  function askQuestion(playerIndex) {
+    let index;
+    let attempts = 0;
+    do {
+      index = Math.floor(Math.random() * questions.length);
+      attempts++;
+    } while (usedQuestions[index] && attempts < 100);
+
+    if (attempts < 100) {
+      const resposta = prompt(`Rousseau pergunta para ${players[playerIndex]}:
+${questions[index]}`);
+      if (resposta && resposta.toLowerCase().includes(answers[index].split(" ")[1].toLowerCase())) {
+        usedQuestions[index] = true;
+        document.getElementById("message").textContent = "Rousseau: Muito bem, resposta correta!";
       } else {
-        alert("Resposta errada! Fique parado nessa rodada.");
+        document.getElementById("message").textContent = "Rousseau: Hmmm... pense melhor na próxima.";
       }
-      createBoard();
+    } else {
+      document.getElementById("message").textContent = "Rousseau: Sem perguntas novas agora, mas continue!";
     }
-
-    createBoard();
-  </script>
-</body>
+  }
+</script></body>
 </html>
