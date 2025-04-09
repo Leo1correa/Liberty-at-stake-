@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Liberdade em Jogo</title>
+  <style>
+    body {
+      font-family: 'Georgia', serif;
+      margin: 0;
+      background: url('https://upload.wikimedia.org/wikipedia/commons/3/3b/Jean-Jacques_Rousseau_%28painted_portrait%29.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: #333;
+    }
+    .tabuleiro {
+      max-width: 800px;
+      margin: auto;
+      background: rgba(255,255,255,0.9);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    }
+    h1 {
+      text-align: center;
+      font-size: 2em;
+    }
+    .jogador {
+      margin: 10px 0;
+    }
+    #mensagem {
+      font-weight: bold;
+      margin-top: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 1em;
+      background-color: #b3d7ff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #91c5ff;
+    }
+  </style>
+</head>
+<body>
+  <div class="tabuleiro">
+    <h1>Liberdade em Jogo</h1>
+    <div id="setup">
+      <p>Escolha o número de jogadores (2 a 6):</p>
+      <input type="number" id="numJogadores" min="2" max="6" />
+      <button onclick="iniciarJogo()">Começar</button>
+    </div>
+    <div id="formJogadores"></div>
+    <div id="jogo" style="display: none;">
+      <p id="mensagem">Clique no dado para jogar!</p>
+      <button onclick="rolarDado()">Rolar Dado</button>
+      <p id="resultadoDado"></p>
+    </div>
+  </div>
+  <audio id="somDado" src="https://cdn.pixabay.com/audio/2022/03/15/audio_38c1badd1b.mp3"></audio>
+  <script>
+    let jogadores = [];
+    let posicoes = [];
+    let jogadorAtual = 0;
+
+    function iniciarJogo() {
+      const n = parseInt(document.getElementById('numJogadores').value);
+      if (isNaN(n) || n < 2 || n > 6) {
+        alert('Número de jogadores inválido!');
+        return;
+      }
+      const form = document.getElementById('formJogadores');
+      form.innerHTML = '<h3>Digite os nomes e gêneros:</h3>';
+      for (let i = 0; i < n; i++) {
+        form.innerHTML += `
+          <div class="jogador">
+            Jogador ${i + 1}: 
+            <input type="text" placeholder="Nome" id="nome${i}" />
+            <select id="genero${i}">
+              <option value="masculino">Masculino</option>
+              <option value="feminino">Feminino</option>
+            </select>
+          </div>
+        `;
+      }
+      form.innerHTML += '<button onclick="começarPartida()">Iniciar Partida</button>';
+    }
+
+    function começarPartida() {
+      jogadores = [];
+      posicoes = [];
+      const n = parseInt(document.getElementById('numJogadores').value);
+      for (let i = 0; i < n; i++) {
+        const nome = document.getElementById(`nome${i}`).value;
+        const genero = document.getElementById(`genero${i}`).value;
+        if (!nome) {
+          alert(`Preencha o nome do jogador ${i + 1}`);
+          return;
+        }
+        jogadores.push({ nome, genero });
+        posicoes.push(0);
+      }
+      document.getElementById('setup').style.display = 'none';
+      document.getElementById('formJogadores').style.display = 'none';
+      document.getElementById('jogo').style.display = 'block';
+      atualizarMensagem();
+    }
+
+    function rolarDado() {
+      const som = document.getElementById('somDado');
+      som.play();
+      document.getElementById('resultadoDado').textContent = 'Rolando...';
+      setTimeout(() => {
+        const resultado = Math.floor(Math.random() * 6) + 1;
+        document.getElementById('resultadoDado').textContent = `Resultado: ${resultado}`;
+        posicoes[jogadorAtual] += resultado;
+        if (posicoes[jogadorAtual] >= 20) {
+          alert(`${jogadores[jogadorAtual].nome} venceu o jogo!`);
+          location.reload();
+        } else {
+          jogadorAtual = (jogadorAtual + 1) % jogadores.length;
+          atualizarMensagem();
+        }
+      }, 2000);
+    }
+
+    function atualizarMensagem() {
+      const j = jogadores[jogadorAtual];
+      const tratamento = j.genero === 'feminino' ? 'a' : 'o';
+      document.getElementById('mensagem').textContent = `É a vez d${tratamento} ${j.nome}`;
+    }
+  </script>
+</body>
+</html>
