@@ -1,17 +1,20 @@
 
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Caminho do Contrato Social</title>
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Liberdade em Jogo</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
 </head>
 <body>
-  <div id="logo-screen" class="screen">
-    <h1 class="logo">Caminho do Contrato Social</h1>
-  </div>
-  <canvas id="gameCanvas"></canvas>
-  <script src="script.js"></script>
+    <h1>Liberdade em Jogo</h1>
+    <p>Jogo educativo baseado nas ideias de Rousseau.</p>
+    <button onclick="startGame()">Iniciar Jogo</button>
+    <div id="gameBoard"></div>
+    <audio id="bgm" loop autoplay>
+        <source src="audio/musica_classica.mp3" type="audio/mpeg">
+    </audio>
 </body>
 </html>
